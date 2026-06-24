@@ -12,6 +12,16 @@ const findById = async (id) => {
     return rows[0];
 };
 
+const getAllUsers = async () => {
+    const sql = `
+        SELECT a.id, u.name, a.email, a.role, a.is_verified, a.is_active, u.phone, u.bio, u.avatar
+        FROM account a
+        LEFT JOIN users u ON u.account_id = a.id
+    `;
+    const [rows] = await pool.query(sql);
+    return rows;
+};
+
 const updateByAccountId = async (accountId, data) => {
     const sql = `
         UPDATE users
@@ -32,7 +42,20 @@ const updateByAccountId = async (accountId, data) => {
     return result;
 };
 
+const updateAvatarByAccountId = async (accountId, avatarUrl) => {
+    const sql = `
+        UPDATE users
+        SET avatar = ?
+        WHERE account_id = ?
+    `;
+    const [result] = await pool.query(sql, [avatarUrl, accountId]);
+    return result;
+};
+
 module.exports = {
     findById,
-    updateByAccountId
+    getAllUsers,
+    updateByAccountId,
+    updateAvatarByAccountId
 };
+

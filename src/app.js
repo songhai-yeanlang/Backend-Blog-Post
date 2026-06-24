@@ -1,10 +1,12 @@
 require('dotenv').config();
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const { handleError } = require('./utils/handleError');
 const app = express();
 app.use(express.json());
 app.use(cors());
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 const authRoutes = require('./modules/auth/auth.routes');
 const userProfileRoutes = require('./modules/userProfile/userProfile.route');
