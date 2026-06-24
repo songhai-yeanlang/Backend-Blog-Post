@@ -1,5 +1,6 @@
 const { writeErrorLog } = require('../../utils/handleError');
 const jwt = require('jsonwebtoken');
+const authModel = require('./auth.model');
 
 const authMiddleware = (schema) => async (req, res, next) => {
     const { error, value } = schema.validate(req.body, {
@@ -30,6 +31,15 @@ const isLogin = async (req, res, next) => {
 
         const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_fallback_secret_key');
+
+        const userTokenObj = await authModel.findTokenByEmail(decoded.email);
+        if (!userTokenObj || userTokenObj.token !== token) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid or expired token.'
+            });
+        }
+
         req.user = decoded;
         next();
     } catch (error) {

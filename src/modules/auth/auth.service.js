@@ -182,6 +182,8 @@ const login = async (data) => {
         expiresIn: process.env.JWT_EXPIRES_IN || '1d'
     });
 
+    await authModel.updateToken(user.id, token);
+
     return {
         user: {
             id: user.id,
@@ -282,6 +284,31 @@ const resetPassword = async (userId, newPassword) => {
     await authModel.updateToken(userId, null);
 };
 
+const logout = async (userId) => {
+    await authModel.updateToken(userId, null);
+};
+
+const changePassword = async (userId, data) => {
+    const { currentPassword, newPassword } = data;
+    
+    const account = await authModel.findPasswordById(userId);
+    if (!account) {
+        const error = new Error('User not found');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    const isPasswordValid = await bcrypt.compare(currentPassword, account.password);
+    if (!isPasswordValid) {
+        const error = new Error('Current password is incorrect');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const hashPassword = await bcrypt.hash(newPassword, 10);
+    await authModel.updatePassword(userId, hashPassword);
+};
+
 module.exports = {
     register,
     verifyEmail,
@@ -289,5 +316,8 @@ module.exports = {
     login,
     forgotPassword,
     verifyOtp,
-    resetPassword
+    resetPassword,
+    logout,
+    changePassword
 };
+

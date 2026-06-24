@@ -59,11 +59,37 @@ const resetPasswordSchema = joi.object({
         })
 });
 
+const changePasswordSchema = joi.object({
+    currentPassword: joi.string().required().messages({
+        'any.required': 'current password is required'
+    }),
+    newPassword: joi.string()
+        .min(8)
+        .max(30)
+        .pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\\$%\\^&\\*])'))
+        .required()
+        .messages({
+            'string.min': 'new password must be at least 8 characters',
+            'string.max': 'new password must be at most 30 characters',
+            'string.pattern.base': 'new password must include uppercase, lowercase, number, and special character',
+            'any.required': 'new password is required'
+        }),
+    confirmPassword: joi.string()
+        .required()
+        .valid(joi.ref('newPassword'))
+        .messages({
+            'any.only': 'confirm password must match new password',
+            'any.required': 'confirm password is required'
+        })
+});
+
 module.exports = {
     registerUserSchema,
     resendVerificationSchema,
     loginUserSchema,
     forgotPasswordSchema,
     resetPasswordSchema,
-    verifyOtpSchema
+    verifyOtpSchema,
+    changePasswordSchema
 };
+
