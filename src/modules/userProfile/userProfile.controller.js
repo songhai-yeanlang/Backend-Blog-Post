@@ -27,7 +27,36 @@ const updateProfile = async (req, res) => {
     }
 };
 
+const updateAvatar = async (req, res) => {
+    try {
+        const profile = await userProfileService.updateAvatar(req.user.id, req.file);
+        return res.status(200).json({
+            success: true,
+            message: "Avatar updated successfully",
+            data: profile
+        });
+    } catch (error) {
+        return await handleError(res, 'userProfileController', error);
+    }
+};
+
+const getAllUsers = async (req, res) => {
+    try {
+        const users = await userProfileService.getAllUsers();
+        return res.status(200).json({
+            success: true,
+            message: "Get all users successfully",
+            data: users
+        });
+    } catch (error) {
+        return await handleError(res, 'userProfileController', error);
+    }
+};
+
 module.exports = {
     getProfile,
-    updateProfile
+    updateProfile,
+    updateAvatar,
+    getAllUsers
 };
+
