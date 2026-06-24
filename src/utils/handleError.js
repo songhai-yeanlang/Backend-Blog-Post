@@ -2,7 +2,6 @@ const { logError } = require('./logError');
 
 const getErrorResponse = (error) => {
     if (error.code === 'ER_DUP_ENTRY') {
-        // Check the SQL message to see if the duplicate key was the email field
         const isEmail = error.sqlMessage && error.sqlMessage.toLowerCase().includes('email');
         
         return {
@@ -21,11 +20,10 @@ const getErrorResponse = (error) => {
 };
 
 const writeErrorLog = async (controller, error) => {
-    // Safely parse the error even if it is not a standard Error object (e.g. an array or custom object)
     let message = 'Unknown error';
     
     if (error?.stack) {
-        // Make the stack trace cleaner by removing node_modules and internal Node.js lines
+
         message = error.stack
             .split('\n')
             .filter(line => !line.includes('node_modules') && !line.includes('node:internal'))
@@ -33,8 +31,6 @@ const writeErrorLog = async (controller, error) => {
     } else {
         message = error?.message || (typeof error === 'object' ? JSON.stringify(error) : String(error));
     }
-
-    // Print the error to the terminal during development
     console.error(`[${controller}] Error:`, error);
     
     await logError(controller, message);

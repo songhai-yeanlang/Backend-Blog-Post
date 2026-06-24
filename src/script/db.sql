@@ -1,15 +1,9 @@
-
-CREATE TABLE users (
+CREATE TABLE account (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255),
-    email VARCHAR(255) UNIQUE,
-    password VARCHAR(255),
-    token TEXT,
-    phone VARCHAR(20),
-    bio TEXT,
-    avatar TEXT,
-    address TEXT,
-    role ENUM('admin', 'user'), 
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    token VARCHAR(500),
+    role ENUM('admin', 'user') DEFAULT 'user',
     is_active TINYINT(1) DEFAULT 0,
     is_verified TINYINT(1) DEFAULT 0,
     verification_token VARCHAR(255),
@@ -17,4 +11,60 @@ CREATE TABLE users (
     last_login_at DATETIME,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    account_id INT NOT NULL UNIQUE,
+    name VARCHAR(255),
+    phone VARCHAR(20),
+    bio TEXT,
+    avatar TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (account_id) REFERENCES account(id) ON DELETE CASCADE
+);
+
+CREATE TABLE addresses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT, 
+    address TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE tags (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE blog_post (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NULL,
+    category_id INT NULL,
+    title VARCHAR(255) NOT NULL,
+    content LONGTEXT,
+    image VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+);
+
+CREATE TABLE blog_post_tags (
+    post_id INT,
+    tag_id INT,
+    PRIMARY KEY (post_id, tag_id),
+    FOREIGN KEY (post_id) REFERENCES blog_post(id) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
 );

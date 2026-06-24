@@ -1,15 +1,15 @@
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
-const userMailer = require('./user.mailer');
-const userModel = require('./user.model');
-
+const authMailer = require('../../configs/mail.config');
+const authModel = require('./auth.model');
+const pool = require('../../configs/db.config');
 
 const VERIFICATION_EXPIRES_HOURS = 24;
 
 const createVerificationUrl = (verificationToken) => {
     const baseUrl = process.env.APP_URL || `http://localhost:${process.env.PORT || 3000}`;
-    const verificationUrl = new URL('/api/users/verify-email', baseUrl);
+    const verificationUrl = new URL('/api/auth/verify-email', baseUrl);
     verificationUrl.searchParams.set('token', verificationToken);
 
     return verificationUrl.toString();
@@ -22,32 +22,51 @@ const register = async (data) => {
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const verificationExpires = new Date(Date.now() + VERIFICATION_EXPIRES_HOURS * 60 * 60 * 1000);
 
-    const row = await userModel.register({
-        name,
-        email,
-        password: hashPassword,
-        verificationToken,
-        verificationExpires,
-        isVerified: false,
-        isActive: false
-    });
+    const connection = await pool.getConnection();
+    let accountId;
+    try {
+        await connection.beginTransaction();
+
+        const accountResult = await authModel.createAccount({
+            email,
+            password: hashPassword,
+            verificationToken,
+            verificationExpires,
+            isVerified: false,
+            isActive: false
+        }, connection);
+
+        accountId = accountResult.insertId;
+
+        await authModel.createUser({
+            accountId,
+            name
+        }, connection);
+
+        await connection.commit();
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+    } finally {
+        connection.release();
+    }
 
     const verificationUrl = createVerificationUrl(verificationToken);
     let emailSent = true;
 
     try {
-        await userMailer.sendVerificationEmail({
+        await authMailer.sendVerificationEmail({
             to: email,
             name,
             verificationUrl
         });
     } catch (error) {
-        console.error(`[user.service] Failed to send verification email to ${email}:`, error.message);
+        console.error(`[auth.service] Failed to send verification email to ${email}:`, error.message);
         emailSent = false;
     }
 
     return {
-        id: row.insertId,
+        id: accountId,
         name,
         email,
         isVerified: false,
@@ -63,7 +82,7 @@ const verifyEmail = async (verificationToken) => {
         throw error;
     }
 
-    const user = await userModel.findByVerificationToken(verificationToken);
+    const user = await authModel.findByVerificationToken(verificationToken);
 
     if (!user) {
         const error = new Error('Invalid verification link');
@@ -77,7 +96,7 @@ const verifyEmail = async (verificationToken) => {
         throw error;
     }
 
-    await userModel.markEmailAsVerified(user.id);
+    await authModel.markEmailAsVerified(user.id);
 
     return {
         id: user.id,
@@ -89,7 +108,7 @@ const verifyEmail = async (verificationToken) => {
 };
 
 const resendVerification = async (email) => {
-    const user = await userModel.findByEmail(email.toLowerCase());
+    const user = await authModel.findByEmail(email.toLowerCase());
 
     if (!user) {
         const error = new Error('User not found');
@@ -106,19 +125,19 @@ const resendVerification = async (email) => {
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const verificationExpires = new Date(Date.now() + VERIFICATION_EXPIRES_HOURS * 60 * 60 * 1000);
 
-    await userModel.updateVerificationToken(user.id, verificationToken, verificationExpires);
+    await authModel.updateVerificationToken(user.id, verificationToken, verificationExpires);
 
     const verificationUrl = createVerificationUrl(verificationToken);
     let emailSent = true;
 
     try {
-        await userMailer.sendVerificationEmail({
+        await authMailer.sendVerificationEmail({
             to: user.email,
             name: user.name,
             verificationUrl
         });
     } catch (error) {
-        console.error(`[user.service] Failed to resend verification email to ${user.email}:`, error.message);
+        console.error(`[auth.service] Failed to resend verification email to ${user.email}:`, error.message);
         emailSent = false;
     }
 
@@ -127,7 +146,7 @@ const resendVerification = async (email) => {
 
 const login = async (data) => {
     const { email, password } = data;
-    const user = await userModel.findForLogin(email.toLowerCase());
+    const user = await authModel.findForLogin(email.toLowerCase());
 
     if (!user) {
         const error = new Error('Invalid email or password');
@@ -148,13 +167,11 @@ const login = async (data) => {
         throw error;
     }
 
-
     if (!user.is_active) {
         const error = new Error('Your account has been deactivated');
         error.statusCode = 403;
         throw error;
     }
-
 
     const payload = {
         id: user.id,
@@ -164,7 +181,6 @@ const login = async (data) => {
     const token = jwt.sign(payload, process.env.JWT_SECRET || 'your_fallback_secret_key', {
         expiresIn: process.env.JWT_EXPIRES_IN || '1d'
     });
-
 
     return {
         user: {
@@ -177,71 +193,8 @@ const login = async (data) => {
     };
 };
 
-const getProfile = async (id) => {
-    const user = await userModel.findById(id);
-
-    if (!user) {
-        const error = new Error('User not found');
-        error.statusCode = 404;
-        throw error;
-    }
-    return user;
-};
-
-const changePassword = async (userId, data) => {
-    const { oldPassword, newPassword } = data;
-
-    const user = await userModel.findPasswordById(userId);
-
-    if (!user) {
-        const error = new Error('User not found');
-        error.statusCode = 404;
-        throw error;
-    }
-
-    const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
-    if (!isPasswordValid) {
-        const error = new Error('Invalid old password');
-        error.statusCode = 400;
-        throw error;
-    }
-
-    const hashPassword = await bcrypt.hash(newPassword, 10);
-    await userModel.updatePassword(userId, hashPassword);
-};
-
-const deleteProfile = async (userId) => {
-    const user = await userModel.findById(userId);
-
-    if (!user) {
-        const error = new Error('User not found');
-        error.statusCode = 404;
-        throw error;
-    }
-
-    await userModel.deleteProfile(userId);
-};
-
-const updateProfile = async (userId, data) => {
-    let user = await userModel.findById(userId);
-    if (!user) {
-        const error = new Error('User not found');
-        error.statusCode = 404;
-        throw error;
-    }
-    let row = await userModel.updateProfile({
-        id: userId,
-        name: data.name !== undefined ? data.name : user.name,
-        phone: data.phone !== undefined ? data.phone : user.phone,
-        address: data.address !== undefined ? data.address : user.address,
-        bio: data.bio !== undefined ? data.bio : user.bio,
-    });
-    return row;
-
-}
-
 const forgotPassword = async (email) => {
-    const user = await userModel.findByEmail(email.toLowerCase());
+    const user = await authModel.findByEmail(email.toLowerCase());
 
     if (!user) {
         const error = new Error('User not found');
@@ -252,29 +205,29 @@ const forgotPassword = async (email) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const tokenData = JSON.stringify({
         otp,
-        expires: Date.now() + 3600000 // 1 hour
+        expires: Date.now() + 3600000 
     });
 
-    await userModel.updateToken(user.id, tokenData);
+    await authModel.updateToken(user.id, tokenData);
 
     let emailSent = true;
 
     try {
-        await userMailer.sendResetPasswordEmail({
+        await authMailer.sendResetPasswordEmail({
             to: user.email,
             name: user.name,
             otp
         });
     } catch (error) {
-        console.error(`[user.service] Failed to send reset password email to ${user.email}:`, error.message);
+        console.error(`[auth.service] Failed to send reset password email to ${user.email}:`, error.message);
         emailSent = false;
     }
 
     return { emailSent };
 };
 
-const verifyOtp = async (otp) => {
-    const user = await userModel.findByOtp(otp);
+const verifyOtp = async (email, otp) => {
+    const user = await authModel.findTokenByEmail(email.toLowerCase());
 
     if (!user || !user.token) {
         const error = new Error('Invalid OTP');
@@ -316,7 +269,7 @@ const verifyOtp = async (otp) => {
 };
 
 const resetPassword = async (userId, newPassword) => {
-    const user = await userModel.findById(userId);
+    const user = await authModel.findById(userId);
 
     if (!user) {
         const error = new Error('User not found');
@@ -325,8 +278,8 @@ const resetPassword = async (userId, newPassword) => {
     }
 
     const hashPassword = await bcrypt.hash(newPassword, 10);
-    await userModel.updatePassword(userId, hashPassword);
-    await userModel.updateToken(userId, null);
+    await authModel.updatePassword(userId, hashPassword);
+    await authModel.updateToken(userId, null);
 };
 
 module.exports = {
@@ -334,11 +287,7 @@ module.exports = {
     verifyEmail,
     resendVerification,
     login,
-    getProfile,
-    changePassword,
-    deleteProfile,
-    updateProfile,
     forgotPassword,
-    resetPassword,
-    verifyOtp
+    verifyOtp,
+    resetPassword
 };

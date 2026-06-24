@@ -5,18 +5,15 @@ const logError = async (controller, message_err) => {
     try {
         const now = new Date();
         
-        // Adjust for the local timezone offset
+     
         const tzOffset = now.getTimezoneOffset() * 60000;
         const localDate = new Date(now.getTime() - tzOffset);
-        
-        // Formats local time to 'YYYY-MM-DD HH:mm:ss' naturally
+   
         const timestamp = localDate.toISOString().replace('T', ' ').substring(0, 19);
-        const dateString = timestamp.split(' ')[0]; // Gets just 'YYYY-MM-DD'
+        const dateString = timestamp.split(' ')[0]; 
         
-        // Create daily log files to prevent infinite file size growth
+
         const logPath = path.join(__dirname, "..", "logs", `${controller}-${dateString}.txt`);
-        
-        // Add a line break and visual separator for easier reading of multi-line stack traces
         const logMessage = `[${timestamp}]\n${message_err}\n------------------------------------------------------------\n`;
         await fs.mkdir(path.dirname(logPath), { recursive: true });
         await fs.appendFile(logPath, logMessage);

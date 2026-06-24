@@ -6,14 +6,12 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-const userRoutes = require('./modules/users/user.routes');
-app.use('/api/users', userRoutes);
+const authRoutes = require('./modules/auth/auth.routes');
 
-const adminRoutes = require('./modules/admin/admin.routes');
-app.use('/api/admins', adminRoutes);
 
-const postRoutes = require('./modules/posts/post.route');
-app.use('/api/post', postRoutes);
+
+app.use('/api/auth', authRoutes);
+
 
 app.use(async (err, req, res, next) => {
     return await handleError(res, 'app', err);

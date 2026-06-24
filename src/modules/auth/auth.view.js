@@ -108,7 +108,7 @@ const verifyEmailSuccess = (req, res, data) => {
 const verifyEmailError = async (req, res, error) => {
     const { statusCode, message } = getErrorResponse(error);
 
-    await writeErrorLog('userController', error);
+    await writeErrorLog('authController', error);
 
     if (wantsHtml(req)) {
         return res.status(statusCode).send(renderVerificationPage({

@@ -1,8 +1,7 @@
 const { writeErrorLog } = require('../../utils/handleError');
 const jwt = require('jsonwebtoken');
 
-const userMiddleware = (schema) => async (req, res, next) => {
-    // Joi uses .validate(), not .userValidate()
+const authMiddleware = (schema) => async (req, res, next) => {
     const { error, value } = schema.validate(req.body, {
         abortEarly: false
     });
@@ -16,13 +15,12 @@ const userMiddleware = (schema) => async (req, res, next) => {
         req.validated = value;
         next();
     }
-}
+};
 
 const isLogin = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
         
-        // Check if the header exists and starts with 'Bearer '
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             return res.status(401).json({
                 success: false,
@@ -30,9 +28,9 @@ const isLogin = async (req, res, next) => {
             });
         }
 
-        const token = authHeader.split(' ')[1]; // Extract token after 'Bearer'
+        const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_fallback_secret_key');
-        req.user = decoded; // Attach the decoded payload (id, email, role) to req.user
+        req.user = decoded;
         next();
     } catch (error) {
         return res.status(401).json({
@@ -43,6 +41,6 @@ const isLogin = async (req, res, next) => {
 };
 
 module.exports = {
-    userMiddleware,
+    authMiddleware,
     isLogin
 };
