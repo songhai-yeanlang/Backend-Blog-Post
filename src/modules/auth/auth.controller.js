@@ -107,6 +107,30 @@ const resetPassword = async (req, res) => {
     }
 };
 
+const logout = async (req, res) => {
+    try {
+        await authService.logout(req.user.id);
+        return res.status(200).json({
+            success: true,
+            message: "Logout successful"
+        });
+    } catch (error) {
+        return await handleError(res, 'authController', error);
+    }
+};
+
+const changePassword = async (req, res) => {
+    try {
+        await authService.changePassword(req.user.id, req.validated || req.body);
+        return res.status(200).json({
+            success: true,
+            message: "Password changed successfully"
+        });
+    } catch (error) {
+        return await handleError(res, 'authController', error);
+    }
+};
+
 module.exports = {
     register,
     verifyEmail,
@@ -114,5 +138,9 @@ module.exports = {
     login,
     forgotPassword,
     verifyOtp,
-    resetPassword
+    resetPassword,
+    logout,
+    changePassword
 };
+
+

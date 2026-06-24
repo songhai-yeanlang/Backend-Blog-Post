@@ -7,7 +7,8 @@ const {
     loginUserSchema,
     forgotPasswordSchema,
     resetPasswordSchema,
-    verifyOtpSchema
+    verifyOtpSchema,
+    changePasswordSchema
 } = require('./auth.validation');
 
 const router = express.Router();
@@ -19,5 +20,8 @@ router.post('/login', authMiddleware(loginUserSchema), authController.login);
 router.post('/forgot-password', authMiddleware(forgotPasswordSchema), authController.forgotPassword);
 router.post('/verify-otp', authMiddleware(verifyOtpSchema), authController.verifyOtp);
 router.post('/reset-password', isLogin, authMiddleware(resetPasswordSchema), authController.resetPassword);
+router.post('/logout', isLogin, authController.logout);
+router.post('/change-password', isLogin, authMiddleware(changePasswordSchema), authController.changePassword);
+
 
 module.exports = router;

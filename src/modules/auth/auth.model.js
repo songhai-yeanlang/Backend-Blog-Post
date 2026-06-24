@@ -131,6 +131,17 @@ const findTokenByEmail = async (email) => {
     return rows[0];
 };
 
+const findPasswordById = async (id) => {
+    const sql = `
+        SELECT password 
+        FROM account 
+        WHERE id = ? 
+        LIMIT 1
+    `;
+    const [rows] = await pool.query(sql, [id]);
+    return rows[0];
+};
+
 const updatePassword = async (id, newPasswordHash) => {
     const sql = `
         UPDATE account 
@@ -152,5 +163,7 @@ module.exports = {
     updateToken,
     findByOtp,
     findTokenByEmail,
-    updatePassword
+    updatePassword,
+    findPasswordById
 };
+
