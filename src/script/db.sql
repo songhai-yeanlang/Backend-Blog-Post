@@ -75,4 +75,13 @@ ALTER TABLE account
 ADD COLUMN refresh_token VARCHAR(500) AFTER token,
 ADD COLUMN refresh_token_expires DATETIME AFTER refresh_token;
 
-
+-- add table view_blog 25/06/2026
+CREATE TABLE view_blog (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_user_view (post_id, user_id),
+    FOREIGN KEY (post_id) REFERENCES blog_post(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);

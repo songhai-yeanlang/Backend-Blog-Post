@@ -66,10 +66,24 @@ const deleteBlog = async (req, res) => {
     }
 };
 
+const addBlogView = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await blogPostService.addView(req.user.id, id);
+        return res.status(200).json({
+            success: true,
+            message: "Blog view recorded successfully"
+        });
+    } catch (error) {
+        return await handleError(res, 'blogPostController', error);
+    }
+};
+
 module.exports = {
     createBlog,
     updateBlog,
     getAllBlogs,
     getAllOwnerBlogs,
-    deleteBlog
+    deleteBlog,
+    addBlogView
 };

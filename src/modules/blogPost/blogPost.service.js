@@ -269,11 +269,30 @@ const deleteBlog = async (accountId, role, id) => {
     }
 };
 
+const addView = async (accountId, postId) => {
+    const userId = await blogPostModel.getUserIdByAccountId(accountId);
+    if (!userId) {
+        const error = new Error('User profile not found');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    const blogPost = await blogPostModel.findById(postId);
+    if (!blogPost) {
+        const error = new Error('Blog post not found');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    await blogPostModel.addBlogView(postId, userId);
+};
+
 module.exports = {
     createBlog,
     updateBlog,
     getAllBlogs,
     getAllOwnerBlogs,
-    deleteBlog
+    deleteBlog,
+    addView
 };
 

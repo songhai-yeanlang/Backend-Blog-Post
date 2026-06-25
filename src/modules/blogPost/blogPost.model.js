@@ -54,7 +54,8 @@ const addBlogPostTags = async (postId, tagIds, connection = pool) => {
 const findById = async (id) => {
     const sql = `
         SELECT bp.id, bp.user_id, bp.category_id, bp.title, bp.content, bp.image, bp.created_at, bp.updated_at,
-               u.name as author_name, c.name as category_name
+               u.name as author_name, c.name as category_name,
+               (SELECT COUNT(*) FROM view_blog WHERE post_id = bp.id) as views
         FROM blog_post bp
         LEFT JOIN users u ON u.id = bp.user_id
         LEFT JOIN categories c ON c.id = bp.category_id
@@ -109,7 +110,8 @@ const deleteBlogPostTags = async (postId, connection = pool) => {
 const getAllBlogs = async () => {
     const sql = `
         SELECT bp.id, bp.user_id, bp.category_id, bp.title, bp.content, bp.image, bp.created_at, bp.updated_at,
-               u.name as author_name, c.name as category_name
+               u.name as author_name, c.name as category_name,
+               (SELECT COUNT(*) FROM view_blog WHERE post_id = bp.id) as views
         FROM blog_post bp
         LEFT JOIN users u ON u.id = bp.user_id
         LEFT JOIN categories c ON c.id = bp.category_id
@@ -144,7 +146,8 @@ const getAllBlogs = async () => {
 const getAllBlogsByUserId= async (userId) => {
         const sql = `
             SELECT bp.id, bp.user_id, bp.category_id, bp.title, bp.content, bp.image, bp.created_at, bp.updated_at,
-                   u.name as author_name, c.name as category_name
+                   u.name as author_name, c.name as category_name,
+                   (SELECT COUNT(*) FROM view_blog WHERE post_id = bp.id) as views
             FROM blog_post bp
             LEFT JOIN users u ON u.id = bp.user_id
             LEFT JOIN categories c ON c.id = bp.category_id
@@ -180,6 +183,16 @@ const deleteBlogPost = async (id, connection = pool) => {
     return result;
 };
 
+const addBlogView = async (postId, userId) => {
+    const sql = `
+        INSERT INTO view_blog (post_id, user_id)
+        VALUES (?, ?)
+        ON DUPLICATE KEY UPDATE viewed_at = CURRENT_TIMESTAMP
+    `;
+    const [result] = await pool.query(sql, [postId, userId]);
+    return result;
+};
+
 module.exports = {
     getUserIdByAccountId,
     findCategoryById,
@@ -191,6 +204,7 @@ module.exports = {
     deleteBlogPostTags,
     getAllBlogs,
     getAllBlogsByUserId,
-    deleteBlogPost
+    deleteBlogPost,
+    addBlogView
 };
 
