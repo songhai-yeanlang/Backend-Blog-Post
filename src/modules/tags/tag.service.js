@@ -13,6 +13,46 @@ const createTag = async (name) => {
     return newTag;
 };
 
+const getAllTags = async () => {
+    return await tagModel.getAll();
+};
+
+const updateTag = async (params, body) => {
+    const { id } = params;
+    const { name } = body;
+
+    const tag = await tagModel.findById(id);
+    if (!tag) {
+        const error = new Error('Tag not found');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    const existing = await tagModel.findByName(name);
+    if (existing && existing.id !== tag.id) {
+        const error = new Error('Tag name already exists');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    await tagModel.updateById(id, name);
+    return await tagModel.findById(id);
+};
+
+const deleteTag = async (id) => {
+    const tag = await tagModel.findById(id);
+    if (!tag) {
+        const error = new Error('Tag not found');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    await tagModel.deleteById(id);
+};
+
 module.exports = {
-    createTag
+    createTag,
+    getAllTags,
+    updateTag,
+    deleteTag
 };

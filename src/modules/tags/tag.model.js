@@ -31,8 +31,40 @@ const create = async (name) => {
     return result;
 };
 
+const getAll = async () => {
+    const sql = `
+        SELECT id, name, created_at, updated_at
+        FROM tags
+        ORDER BY name ASC
+    `;
+    const [rows] = await pool.query(sql);
+    return rows;
+};
+
+const updateById = async (id, name) => {
+    const sql = `
+        UPDATE tags
+        SET name = ?
+        WHERE id = ?
+    `;
+    const [result] = await pool.query(sql, [name, id]);
+    return result;
+};
+
+const deleteById = async (id) => {
+    const sql = `
+        DELETE FROM tags
+        WHERE id = ?
+    `;
+    const [result] = await pool.query(sql, [id]);
+    return result;
+};
+
 module.exports = {
     findByName,
     findById,
-    create
+    create,
+    getAll,
+    updateById,
+    deleteById
 };
