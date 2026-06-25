@@ -171,6 +171,15 @@ const getAllBlogsByUserId= async (userId) => {
 
         return posts.map(post => ({ ...post, tags: tagsMap[post.id] || [] }));
     }
+const deleteBlogPost = async (id, connection = pool) => {
+    const sql = `
+        DELETE FROM blog_post
+        WHERE id = ?
+    `;
+    const [result] = await connection.query(sql, [id]);
+    return result;
+};
+
 module.exports = {
     getUserIdByAccountId,
     findCategoryById,
@@ -181,6 +190,7 @@ module.exports = {
     updateBlogPost,
     deleteBlogPostTags,
     getAllBlogs,
-    getAllBlogsByUserId
+    getAllBlogsByUserId,
+    deleteBlogPost
 };
 

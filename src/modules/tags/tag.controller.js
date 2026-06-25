@@ -3,8 +3,8 @@ const tagService = require('./tag.service');
 
 const createTag = async (req, res) => {
     try {
-     
-        const data = await tagService.createTag(req.validated || req.body);
+        const { name } = req.validated || req.body;
+        const data = await tagService.createTag(name);
         return res.status(201).json({
             success: true,
             message: "Tag created successfully",

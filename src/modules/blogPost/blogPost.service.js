@@ -223,10 +223,57 @@ const getAllOwnerBlogs = async (accountId) => {
     return await blogPostModel.getAllBlogsByUserId(userId);
 };
 
+const deleteBlog = async (accountId, role, id) => {
+    const userId = await blogPostModel.getUserIdByAccountId(accountId);
+    if (!userId) {
+        const error = new Error('User profile not found');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    const blogPost = await blogPostModel.findById(id);
+    if (!blogPost) {
+        const error = new Error('Blog post not found');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    // Admin can delete any blog. Normal users can only delete their own.
+    if (role !== 'admin' && blogPost.user_id !== userId) {
+        const error = new Error('Access denied. You can only delete your own blog posts.');
+        error.statusCode = 403;
+        throw error;
+    }
+
+    // Clean up cover image file
+    if (blogPost.image) {
+        const filepath = path.join(process.cwd(), blogPost.image);
+        fs.unlink(filepath, (err) => {
+            if (err) console.error(`[blogPost.service] Failed to delete image ${blogPost.image}:`, err.message);
+        });
+    }
+
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        await blogPostModel.deleteBlogPostTags(id, connection);
+        await blogPostModel.deleteBlogPost(id, connection);
+
+        await connection.commit();
+    } catch (error) {
+        await connection.rollback();
+        throw error;
+    } finally {
+        connection.release();
+    }
+};
+
 module.exports = {
     createBlog,
     updateBlog,
     getAllBlogs,
-    getAllOwnerBlogs
+    getAllOwnerBlogs,
+    deleteBlog
 };
 

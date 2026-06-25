@@ -178,7 +178,7 @@ const login = async (data) => {
         email: user.email,
         role: user.role
     };
-    const token = jwt.sign(payload, process.env.JWT_SECRET || 'your_fallback_secret_key', {
+    const token = jwt.sign(payload, process.env.JWT_SECRET || 'lang199s_secret_key', {
         expiresIn: process.env.JWT_EXPIRES_IN || '1d'
     });
 
@@ -268,7 +268,7 @@ const verifyOtp = async (email, otp) => {
         email: user.email,
         isResetToken: true
     };
-    const token = jwt.sign(payload, process.env.JWT_SECRET || 'your_fallback_secret_key', {
+    const token = jwt.sign(payload, process.env.JWT_SECRET || 'lang199s_secret_key', {
         expiresIn: '15m'
     });
 
@@ -351,7 +351,7 @@ const refreshToken = async (oldRefreshToken) => {
         role: user.role
     };
 
-    const newToken = jwt.sign(payload, process.env.JWT_SECRET || 'your_fallback_secret_key', {
+    const newToken = jwt.sign(payload, process.env.JWT_SECRET || 'lang199s_secret_key', {
         expiresIn: process.env.JWT_EXPIRES_IN || '1d'
     });
 

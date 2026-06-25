@@ -9,6 +9,7 @@ const router = express.Router();
 router.post('/create-blog', isLogin, upload.single('image'), authMiddleware(createBlogSchema), blogPostController.createBlog);
 router.put('/update-blog/:id', isLogin, upload.single('image'), authMiddleware(updateBlogSchema), blogPostController.updateBlog);
 router.get('/get-all-blogs', blogPostController.getAllBlogs);
-router.get('/get-all-owner-blogs', isLogin, blogPostController.getAllOwnerBlogs);
+router.get('/get-owner-blogs', isLogin, blogPostController.getAllOwnerBlogs);
+router.delete('/delete-blog/:id', isLogin, blogPostController.deleteBlog);
 
 module.exports = router;

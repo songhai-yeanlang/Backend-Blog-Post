@@ -14,7 +14,7 @@ const isLogin = async (req, res, next) => {
         }
 
         const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'lang199s_secret_key');
 
         const userTokenObj = await authModel.findTokenByEmail(decoded.email);
         if (!userTokenObj || userTokenObj.token !== token) {
@@ -63,4 +63,4 @@ const isAdmin = async (req, res, next) => {
 module.exports = {
     isLogin,
     isAdmin
-};
+};

@@ -53,9 +53,23 @@ const getAllOwnerBlogs = async (req, res) => {
     }
 };
 
+const deleteBlog = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await blogPostService.deleteBlog(req.user.id, req.user.role, id);
+        return res.status(200).json({
+            success: true,
+            message: "Blog post deleted successfully"
+        });
+    } catch (error) {
+        return await handleError(res, 'blogPostController', error);
+    }
+};
+
 module.exports = {
     createBlog,
     updateBlog,
     getAllBlogs,
-    getAllOwnerBlogs
+    getAllOwnerBlogs,
+    deleteBlog
 };

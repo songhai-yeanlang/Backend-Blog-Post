@@ -74,3 +74,5 @@ CREATE TABLE blog_post_tags (
 ALTER TABLE account
 ADD COLUMN refresh_token VARCHAR(500) AFTER token,
 ADD COLUMN refresh_token_expires DATETIME AFTER refresh_token;
+
+
