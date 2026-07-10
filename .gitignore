@@ -6,3 +6,7 @@ npm-debug.log
  # Ignore log files but keep the directory
 logs/*
 !logs/.gitkeep
+
+uploads/**/*
+!uploads/**/.gitkeep
+

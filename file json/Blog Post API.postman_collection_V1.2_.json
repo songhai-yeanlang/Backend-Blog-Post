@@ -1,0 +1,987 @@
+{
+  "info": {
+    "_postman_id": "f08a0d9a-5f43-48e0-bd40-ecf01c5ce1f9",
+    "name": "Blog Post API",
+    "description": "Postman collection for testing the local Blog Post beginner API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "41927268"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{name}}\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Create a user. Password must include uppercase, lowercase, number, and special character. If SMTP is not configured, copy the verification token from the server console."
+          },
+          "response": []
+        },
+        {
+          "name": "Resend Verification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/resend-verification",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "resend-verification"
+              ]
+            },
+            "description": "Generate and send a fresh verification link for an unverified account."
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login response is successful', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "if (response.data && response.data.token) {",
+                  "  pm.environment.set('token', response.data.token);",
+                  "}",
+                  "if (response.data && response.data.refreshToken) {",
+                  "  pm.environment.set('refreshToken', response.data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login after email verification. The test script stores `token` and `refreshToken` in the selected environment."
+          },
+          "response": []
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "Request a reset OTP. If SMTP is not configured, copy the OTP from the server console into the `otp` environment variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('otp response is successful', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "if (response.data && response.data.token) {",
+                  "  pm.environment.set('resetToken', response.data.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"otp\": \"{{otp}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/verify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "verify-otp"
+              ]
+            },
+            "description": "Verify the 6-digit OTP. The test script stores the short-lived `resetToken` for Reset Password."
+          },
+          "response": []
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{resetToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPassword\": \"{{newPassword}}\",\n  \"confirmPassword\": \"{{newPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/reset-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "Requires the `resetToken` saved from Verify OTP."
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{password}}\",\n  \"newPassword\": \"{{newPassword}}\",\n  \"confirmPassword\": \"{{newPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/change-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "change-password"
+              ]
+            },
+            "description": "Requires a normal login token. If you already reset the password, update `password` before sending."
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('refresh response is successful', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const response = pm.response.json();",
+                  "if (response.data && response.data.token) {",
+                  "  pm.environment.set('token', response.data.token);",
+                  "}",
+                  "if (response.data && response.data.refreshToken) {",
+                  "  pm.environment.set('refreshToken', response.data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh-token",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh-token"
+              ]
+            },
+            "description": "Exchange a valid refresh token for a new login token and refresh token."
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Clear the active token for the logged-in account."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User Profile",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/my-profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "my-profile"
+              ]
+            },
+            "description": "Requires the `token` saved from Login."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{name}}\",\n  \"phone\": \"{{phone}}\",\n  \"bio\": \"{{bio}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/update-profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "update-profile"
+              ]
+            },
+            "description": "Update profile fields for the logged-in user."
+          },
+          "response": []
+        },
+        {
+          "name": "Upload Avatar",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "avatar",
+                  "type": "file",
+                  "description": "Choose a jpg, jpeg, png, or webp image under 5 MB.",
+                  "value": null
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/profile/avatar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "profile",
+                "avatar"
+              ]
+            },
+            "description": "Upload and convert the selected image to a 300x300 webp avatar."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/get-all-users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "get-all-users"
+              ]
+            },
+            "description": "Public list of users."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Blog Post",
+      "item": [
+        {
+          "name": "Categories",
+          "item": [
+            {
+              "name": "Get All Categories",
+              "request": {
+                "method": "GET",
+                "header": []
+              },
+              "response": []
+            },
+            {
+              "name": "Create Category",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJsYW5nb2ZmaWNpYWwxOUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3ODIzNjQ3OTcsImV4cCI6MTc4MjQ1MTE5N30.jdtZjzVh-1div-3JUKHjY4w_2XVXo72RDxK8gapsu8A",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"name\":\"Web Decveloper\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/create-category",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "create-category"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Category",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJsYW5nb2ZmaWNpYWwxOUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3ODIzNjQ3OTcsImV4cCI6MTc4MjQ1MTE5N30.jdtZjzVh-1div-3JUKHjY4w_2XVXo72RDxK8gapsu8A",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"name\":\"Vue.js\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/update-category/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "update-category",
+                    "1"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Category",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJsYW5nb2ZmaWNpYWwxOUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3ODIzNjQ3OTcsImV4cCI6MTc4MjQ1MTE5N30.jdtZjzVh-1div-3JUKHjY4w_2XVXo72RDxK8gapsu8A",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/delete-category/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "delete-category",
+                    "1"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Tags",
+          "item": [
+            {
+              "name": "Get All Tags",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/get-all-tags",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "get-all-tags"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Create Tag",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJsYW5nb2ZmaWNpYWwxOUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3ODIzNjQ3OTcsImV4cCI6MTc4MjQ1MTE5N30.jdtZjzVh-1div-3JUKHjY4w_2XVXo72RDxK8gapsu8A",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"name\":\"Bootstrap\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/create-tag",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "create-tag"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Update Tag",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJsYW5nb2ZmaWNpYWwxOUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3ODIzNjQ3OTcsImV4cCI6MTc4MjQ1MTE5N30.jdtZjzVh-1div-3JUKHjY4w_2XVXo72RDxK8gapsu8A",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"name\":\"java\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/update-tag/2",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "update-tag",
+                    "2"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Tag",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJsYW5nb2ZmaWNpYWwxOUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3ODIzNjQ3OTcsImV4cCI6MTc4MjQ1MTE5N30.jdtZjzVh-1div-3JUKHjY4w_2XVXo72RDxK8gapsu8A",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/delete-tag/1",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "delete-tag",
+                    "1"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Get All Blogs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/get-all-blogs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "get-all-blogs"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Blog",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJsYW5nb2ZmaWNpYWwxOUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3ODIzNjQ3OTcsImV4cCI6MTc4MjQ1MTE5N30.jdtZjzVh-1div-3JUKHjY4w_2XVXo72RDxK8gapsu8A",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "\tMy First Blog Post",
+                  "type": "text",
+                  "uuid": "9f2f5108-7ee9-4942-adf6-01bd5c9e47db"
+                },
+                {
+                  "key": "content",
+                  "value": "Building this website was never just about writing code. It was a journey filled with emotions, challenges, and moments that tested both my patience and passion.\n\nAt the beginning, everything felt exciting. I had ideas—lots of them. I imagined how the website would look, how users would interact with it, and how it could solve real problems. Opening my code editor for the first time on this project felt like opening a door to something meaningful.\n\nBut as the days went on, reality hit.\n\nThere were bugs I couldn’t fix for hours. Sometimes even days. A small mistake in logic or a missing semicolon could break everything. I remember staring at my screen, wondering why something so simple refused to work. It was frustrating, and honestly, there were moments I wanted to give up.\n\nStill, I didn’t.\n\nEvery problem I solved gave me a small sense of victory. Every feature I completed made the project feel more real. Slowly, piece by piece, the website started to take shape. What once was just an idea in my mind became something I could see and interact with.\n\nOne of the most meaningful parts of this journey was learning. I didn’t just improve my technical skills like working with frontend frameworks or backend APIs—I also learned patience, persistence, and how to think like a problem solver.\n\nThere were also moments of doubt. I compared my work to others and felt like mine wasn’t good enough. But then I realized: this project is my progress. It represents how far I’ve come, not how far I am from someone else.\n\nNow, when I look at the website, I don’t just see pages and features. I see late nights, problem-solving sessions, frustration, growth, and determination. I see a part of myself in it.\n\nThis website is not perfect. And maybe it never will be. But it’s real. It’s built with effort, learning, and passion—and that’s what makes it valuable.\n\nIf there’s one thing I’ve learned from this journey, it’s this: building something from nothing is hard, but it’s also one of the most rewarding experiences you can have.\n\nAnd this is just the beginning.",
+                  "type": "text",
+                  "uuid": "8be12c6c-d6d8-4b46-a246-2478a3d9986b"
+                },
+                {
+                  "key": "category_id",
+                  "value": "2",
+                  "type": "text",
+                  "uuid": "3600dd3c-e7f3-4475-bce4-b60871f12768"
+                },
+                {
+                  "key": "tags",
+                  "value": "[2]",
+                  "type": "text",
+                  "uuid": "1d318d15-3607-4c20-a530-bee487bf306c"
+                },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "uuid": "db243a1f-8b89-4321-be7d-9ab103a4a6fb",
+                  "src": "/C:/Users/YEANLANG/OneDrive/Pictures/Screenshots/Screenshot 2026-06-25 123630.png"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/create-blog",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "create-blog"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Blog Copy",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJsYW5nb2ZmaWNpYWwxOUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3ODIzNjQ3OTcsImV4cCI6MTc4MjQ1MTE5N30.jdtZjzVh-1div-3JUKHjY4w_2XVXo72RDxK8gapsu8A",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "\tMy First Blog Post update",
+                  "type": "text",
+                  "uuid": "9f2f5108-7ee9-4942-adf6-01bd5c9e47db"
+                },
+                {
+                  "key": "content",
+                  "value": "Building this website was never just about writing code. It was a journey filled with emotions, challenges, and moments that tested both my patience and passion.\n\nAt the beginning, everything felt exciting. I had ideas—lots of them. I imagined how the website would look, how users would interact with it, and how it could solve real problems. Opening my code editor for the first time on this project felt like opening a door to something meaningful.\n\nBut as the days went on, reality hit.\n\nThere were bugs I couldn’t fix for hours. Sometimes even days. A small mistake in logic or a missing semicolon could break everything. I remember staring at my screen, wondering why something so simple refused to work. It was frustrating, and honestly, there were moments I wanted to give up.\n\nStill, I didn’t.\n\nEvery problem I solved gave me a small sense of victory. Every feature I completed made the project feel more real. Slowly, piece by piece, the website started to take shape. What once was just an idea in my mind became something I could see and interact with.\n\nOne of the most meaningful parts of this journey was learning. I didn’t just improve my technical skills like working with frontend frameworks or backend APIs—I also learned patience, persistence, and how to think like a problem solver.\n\nThere were also moments of doubt. I compared my work to others and felt like mine wasn’t good enough. But then I realized: this project is my progress. It represents how far I’ve come, not how far I am from someone else.\n\nNow, when I look at the website, I don’t just see pages and features. I see late nights, problem-solving sessions, frustration, growth, and determination. I see a part of myself in it.\n\nThis website is not perfect. And maybe it never will be. But it’s real. It’s built with effort, learning, and passion—and that’s what makes it valuable.\n\nIf there’s one thing I’ve learned from this journey, it’s this: building something from nothing is hard, but it’s also one of the most rewarding experiences you can have.\n\nAnd this is just the beginning.",
+                  "type": "text",
+                  "uuid": "8be12c6c-d6d8-4b46-a246-2478a3d9986b"
+                },
+                {
+                  "key": "category_id",
+                  "value": "2",
+                  "type": "text",
+                  "uuid": "3600dd3c-e7f3-4475-bce4-b60871f12768"
+                },
+                {
+                  "key": "tags",
+                  "value": "[2]",
+                  "type": "text",
+                  "uuid": "1d318d15-3607-4c20-a530-bee487bf306c"
+                },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "uuid": "db243a1f-8b89-4321-be7d-9ab103a4a6fb",
+                  "src": "/C:/Users/YEANLANG/OneDrive/Pictures/Screenshots/Screenshot 2026-06-25 123630.png"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/update-blog/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "update-blog",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Owner Blogs",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJsYW5nb2ZmaWNpYWwxOUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3ODIzNjQ3OTcsImV4cCI6MTc4MjQ1MTE5N30.jdtZjzVh-1div-3JUKHjY4w_2XVXo72RDxK8gapsu8A",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/get-owner-blogs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "get-owner-blogs"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Blog View",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJsYW5nb2ZmaWNpYWwxOUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3ODIzNjQ3OTcsImV4cCI6MTc4MjQ1MTE5N30.jdtZjzVh-1div-3JUKHjY4w_2XVXo72RDxK8gapsu8A",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/add-blog-view/2",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "add-blog-view",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Blog",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJsYW5nb2ZmaWNpYWwxOUBnbWFpbC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3ODIzNjQ3OTcsImV4cCI6MTc4MjQ1MTE5N30.jdtZjzVh-1div-3JUKHjY4w_2XVXo72RDxK8gapsu8A",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/delete-blog/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "delete-blog",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Favorite",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

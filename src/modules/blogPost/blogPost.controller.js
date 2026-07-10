@@ -29,11 +29,13 @@ const updateBlog = async (req, res) => {
 
 const getAllBlogs = async (req, res) => {
     try {
-        const data = await blogPostService.getAllBlogs();
+        const { page, limit } = req.validatedQuery;
+        const { posts, pagination } = await blogPostService.getAllBlogs(page, limit);
         return res.status(200).json({
             success: true,
             message: "Get all blogs successfully",
-            data
+            data: posts,
+            pagination
         });
     } catch (error) {
         return await handleError(res, 'blogPostController', error);
@@ -42,11 +44,13 @@ const getAllBlogs = async (req, res) => {
 
 const getAllOwnerBlogs = async (req, res) => {
     try {
-        const data = await blogPostService.getAllOwnerBlogs(req.user.id);
+        const { page, limit } = req.validatedQuery;
+        const { posts, pagination } = await blogPostService.getAllOwnerBlogs(req.user.id, page, limit);
         return res.status(200).json({
             success: true,
             message: "Get all owner blogs successfully",
-            data
+            data: posts,
+            pagination
         });
     } catch (error) {
         return await handleError(res, 'blogPostController', error);
@@ -71,7 +75,7 @@ const addBlogView = async (req, res) => {
         const { id } = req.params;
         const result = await blogPostService.addView(req.user.id, id);
         return res.status(200).json({
-            success: true,
+            success: result.recorded,
             message: result.recorded
                 ? "Blog view recorded successfully"
                 : "You have already viewed this blog post"

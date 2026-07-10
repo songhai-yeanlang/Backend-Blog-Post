@@ -9,4 +9,5 @@ router.post('/create-category', isLogin, isAdmin, authMiddleware(createCategoryS
 router.put('/update-category/:id', isLogin, isAdmin, authMiddleware(updateCategorySchema), categoryController.updateCategory);
 router.delete('/delete-category/:id', isLogin, isAdmin, categoryController.deleteCategory);
 router.get('/get-all-categories', categoryController.getAllCategories);
+
 module.exports = router;

@@ -107,7 +107,7 @@ const deleteBlogPostTags = async (postId, connection = pool) => {
     await connection.query(sql, [postId]);
 };
 
-const getAllBlogs = async () => {
+const getAllBlogs = async (offset, limit) => {
     const sql = `
         SELECT bp.id, bp.user_id, bp.category_id, bp.title, bp.content, bp.image, bp.created_at, bp.updated_at,
                u.name as author_name, c.name as category_name,
@@ -116,8 +116,9 @@ const getAllBlogs = async () => {
         LEFT JOIN users u ON u.id = bp.user_id
         LEFT JOIN categories c ON c.id = bp.category_id
         ORDER BY bp.created_at DESC
+        LIMIT ? OFFSET ?
     `;
-    const [posts] = await pool.query(sql);
+    const [posts] = await pool.query(sql, [limit, offset]);
 
     if (posts.length === 0) return [];
 
@@ -143,37 +144,55 @@ const getAllBlogs = async () => {
         tags: tagsMap[post.id] || []
     }));
 };
-const getAllBlogsByUserId= async (userId) => {
-        const sql = `
-            SELECT bp.id, bp.user_id, bp.category_id, bp.title, bp.content, bp.image, bp.created_at, bp.updated_at,
-                   u.name as author_name, c.name as category_name,
-                   (SELECT COUNT(*) FROM view_blog WHERE post_id = bp.id) as views
-            FROM blog_post bp
-            LEFT JOIN users u ON u.id = bp.user_id
-            LEFT JOIN categories c ON c.id = bp.category_id
-            WHERE bp.user_id = ?
-            ORDER BY bp.created_at DESC
-        `;
-        const [posts] = await pool.query(sql, [userId]);
-        if (posts.length === 0) return [];
 
-        const postIds = posts.map(p => p.id);
-        const tagsSql = `
-            SELECT bpt.post_id, t.id, t.name
-            FROM tags t
-            JOIN blog_post_tags bpt ON bpt.tag_id = t.id
-            WHERE bpt.post_id IN (?)
-        `;
-        const [allTags] = await pool.query(tagsSql, [postIds]);
+const countAllBlogs = async () => {
+    const sql = `
+        SELECT COUNT(*) as total FROM blog_post
+    `;
+    const [rows] = await pool.query(sql);
+    return rows[0] ? rows[0].total : 0;
+};
 
-        const tagsMap = {};
-        for (const tag of allTags) {
-            if (!tagsMap[tag.post_id]) tagsMap[tag.post_id] = [];
-            tagsMap[tag.post_id].push({ id: tag.id, name: tag.name });
-        }
+const getAllBlogsByUserId = async (userId, offset, limit) => {
+    const sql = `
+        SELECT bp.id, bp.user_id, bp.category_id, bp.title, bp.content, bp.image, bp.created_at, bp.updated_at,
+               u.name as author_name, c.name as category_name,
+               (SELECT COUNT(*) FROM view_blog WHERE post_id = bp.id) as views
+        FROM blog_post bp
+        LEFT JOIN users u ON u.id = bp.user_id
+        LEFT JOIN categories c ON c.id = bp.category_id
+        WHERE bp.user_id = ?
+        ORDER BY bp.created_at DESC
+        LIMIT ? OFFSET ?
+    `;
+    const [posts] = await pool.query(sql, [userId, limit, offset]);
+    if (posts.length === 0) return [];
 
-        return posts.map(post => ({ ...post, tags: tagsMap[post.id] || [] }));
+    const postIds = posts.map(p => p.id);
+    const tagsSql = `
+        SELECT bpt.post_id, t.id, t.name
+        FROM tags t
+        JOIN blog_post_tags bpt ON bpt.tag_id = t.id
+        WHERE bpt.post_id IN (?)
+    `;
+    const [allTags] = await pool.query(tagsSql, [postIds]);
+
+    const tagsMap = {};
+    for (const tag of allTags) {
+        if (!tagsMap[tag.post_id]) tagsMap[tag.post_id] = [];
+        tagsMap[tag.post_id].push({ id: tag.id, name: tag.name });
     }
+
+    return posts.map(post => ({ ...post, tags: tagsMap[post.id] || [] }));
+};
+
+const countAllBlogsByUserId = async (userId) => {
+    const sql = `
+        SELECT COUNT(*) as total FROM blog_post WHERE user_id = ?
+    `;
+    const [rows] = await pool.query(sql, [userId]);
+    return rows[0] ? rows[0].total : 0;
+};
 const deleteBlogPost = async (id, connection = pool) => {
     const sql = `
         DELETE FROM blog_post
@@ -235,7 +254,9 @@ module.exports = {
     updateBlogPost,
     deleteBlogPostTags,
     getAllBlogs,
+    countAllBlogs,
     getAllBlogsByUserId,
+    countAllBlogsByUserId,
     deleteBlogPost,
     addBlogView,
     hasUserViewed,

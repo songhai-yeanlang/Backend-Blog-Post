@@ -209,18 +209,44 @@ const updateBlog = async (accountId, id, body, file) => {
     return await blogPostModel.findById(id);
 };
 
-const getAllBlogs = async () => {
-    return await blogPostModel.getAllBlogs();
-}
+const getAllBlogs = async (page = 1, limit = 8) => {
+    const offset = (page - 1) * limit;
+    const posts = await blogPostModel.getAllBlogs(offset, limit);
+    const total = await blogPostModel.countAllBlogs();
+    const totalPages = Math.ceil(total / limit);
 
-const getAllOwnerBlogs = async (accountId) => {
+    return {
+        posts,
+        pagination: {
+            total,
+            page,
+            limit,
+            totalPages
+        }
+    };
+};
+
+const getAllOwnerBlogs = async (accountId, page = 1, limit = 8) => {
     const userId = await blogPostModel.getUserIdByAccountId(accountId);
     if (!userId) {
         const error = new Error('User profile not found');
         error.statusCode = 404;
         throw error;
     }
-    return await blogPostModel.getAllBlogsByUserId(userId);
+    const offset = (page - 1) * limit;
+    const posts = await blogPostModel.getAllBlogsByUserId(userId, offset, limit);
+    const total = await blogPostModel.countAllBlogsByUserId(userId);
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+        posts,
+        pagination: {
+            total,
+            page,
+            limit,
+            totalPages
+        }
+    };
 };
 
 const deleteBlog = async (accountId, role, id) => {
