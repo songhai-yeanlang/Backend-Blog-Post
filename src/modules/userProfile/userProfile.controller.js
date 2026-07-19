@@ -53,10 +53,25 @@ const getAllUsers = async (req, res) => {
     }
 };
 
+const getUserById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const profile = await userProfileService.getProfile(id);
+        return res.status(200).json({
+            success: true,
+            message: "Get user profile successfully",
+            data: profile
+        });
+    } catch (error) {
+        return await handleError(res, 'userProfileController', error);
+    }
+};
+
 module.exports = {
     getProfile,
     updateProfile,
     updateAvatar,
-    getAllUsers
+    getAllUsers,
+    getUserById
 };
 

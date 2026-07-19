@@ -31,7 +31,8 @@ const updateBlogSchema = joi.object({
 
 const getBlogsQuerySchema = joi.object({
     page: joi.number().integer().positive().default(1),
-    limit: joi.number().integer().positive().max(100).default(8)
+    limit: joi.number().integer().positive().max(100).default(8),
+    userId: joi.number().integer().positive().optional()
 });
 
 module.exports = {

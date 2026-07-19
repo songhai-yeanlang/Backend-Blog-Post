@@ -10,6 +10,13 @@ const getErrorResponse = (error) => {
         };
     }
 
+    if (error.name === 'MulterError') {
+        return {
+            statusCode: 400,
+            message: error.message
+        };
+    }
+
     const statusCode = error.statusCode || error.status || 500;
     const message = error.message || 'Internal server error !!!';
 

@@ -29,8 +29,8 @@ const updateBlog = async (req, res) => {
 
 const getAllBlogs = async (req, res) => {
     try {
-        const { page, limit } = req.validatedQuery;
-        const { posts, pagination } = await blogPostService.getAllBlogs(page, limit);
+        const { page, limit, userId } = req.validatedQuery;
+        const { posts, pagination } = await blogPostService.getAllBlogs(page, limit, userId);
         return res.status(200).json({
             success: true,
             message: "Get all blogs successfully",

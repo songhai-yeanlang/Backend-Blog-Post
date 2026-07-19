@@ -209,10 +209,17 @@ const updateBlog = async (accountId, id, body, file) => {
     return await blogPostModel.findById(id);
 };
 
-const getAllBlogs = async (page = 1, limit = 8) => {
+const getAllBlogs = async (page = 1, limit = 8, userId = null) => {
     const offset = (page - 1) * limit;
-    const posts = await blogPostModel.getAllBlogs(offset, limit);
-    const total = await blogPostModel.countAllBlogs();
+    let posts;
+    let total;
+    if (userId) {
+        posts = await blogPostModel.getAllBlogsByUserId(userId, offset, limit);
+        total = await blogPostModel.countAllBlogsByUserId(userId);
+    } else {
+        posts = await blogPostModel.getAllBlogs(offset, limit);
+        total = await blogPostModel.countAllBlogs();
+    }
     const totalPages = Math.ceil(total / limit);
 
     return {

@@ -9,6 +9,7 @@ router.get('/my-profile', isLogin, userProfileController.getProfile);
 router.put('/update-profile', isLogin, authMiddleware(updateProfileSchema), userProfileController.updateProfile);
 router.post('/profile/avatar', isLogin, upload.single('avatar'), userProfileController.updateAvatar);
 router.get('/get-all-users', userProfileController.getAllUsers);
+router.get('/get-user/:id', userProfileController.getUserById);
 
 
 module.exports = router;

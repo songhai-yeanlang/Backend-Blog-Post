@@ -54,7 +54,7 @@ const addBlogPostTags = async (postId, tagIds, connection = pool) => {
 const findById = async (id) => {
     const sql = `
         SELECT bp.id, bp.user_id, bp.category_id, bp.title, bp.content, bp.image, bp.created_at, bp.updated_at,
-               u.name as author_name, c.name as category_name,
+               u.name as author_name, u.avatar as author_avatar, u.account_id as author_account_id, c.name as category_name,
                (SELECT COUNT(*) FROM view_blog WHERE post_id = bp.id) as views
         FROM blog_post bp
         LEFT JOIN users u ON u.id = bp.user_id
@@ -110,7 +110,7 @@ const deleteBlogPostTags = async (postId, connection = pool) => {
 const getAllBlogs = async (offset, limit) => {
     const sql = `
         SELECT bp.id, bp.user_id, bp.category_id, bp.title, bp.content, bp.image, bp.created_at, bp.updated_at,
-               u.name as author_name, c.name as category_name,
+               u.name as author_name, u.avatar as author_avatar, u.account_id as author_account_id, c.name as category_name,
                (SELECT COUNT(*) FROM view_blog WHERE post_id = bp.id) as views
         FROM blog_post bp
         LEFT JOIN users u ON u.id = bp.user_id
@@ -156,7 +156,7 @@ const countAllBlogs = async () => {
 const getAllBlogsByUserId = async (userId, offset, limit) => {
     const sql = `
         SELECT bp.id, bp.user_id, bp.category_id, bp.title, bp.content, bp.image, bp.created_at, bp.updated_at,
-               u.name as author_name, c.name as category_name,
+               u.name as author_name, u.avatar as author_avatar, u.account_id as author_account_id, c.name as category_name,
                (SELECT COUNT(*) FROM view_blog WHERE post_id = bp.id) as views
         FROM blog_post bp
         LEFT JOIN users u ON u.id = bp.user_id
